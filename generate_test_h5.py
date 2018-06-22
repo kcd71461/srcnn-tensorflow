@@ -3,6 +3,7 @@ import cv2
 from config import config
 import numpy as np
 from commons import (load_image_paths, save_h5_data)
+import os
 
 
 def crop_for_label_image(image, scale):
@@ -45,10 +46,15 @@ sub input-label들 생성
     for i in range(len(imagePaths)):
         input, label, = generateInputAndLabelImage(imagePaths[i], config.scale)
         height, weight, color = input.shape
-
+        num_of_vertical_sub_imgs = 0
+        num_of_horizontal_sub_imgs = 0
         # <editor-fold desc="sub input-label 생성">
         for x in range(0, height - config.image_size + 1, config.stride):
+            num_of_vertical_sub_imgs += 1
+            num_of_horizontal_sub_imgs = 0
+
             for y in range(0, weight - config.image_size + 1, config.stride):
+                num_of_horizontal_sub_imgs += 1
                 sub_input = input[x: x + config.image_size, y: y + config.image_size]
                 sub_label = label[x + padding: x + padding + config.label_size,
                             y + padding: y + padding + config.label_size]
@@ -65,17 +71,23 @@ sub input-label들 생성
                 sub_labels_.append(sub_label)
         # </editor-fold>
 
-    return sub_inputs_, sub_labels_
+    return sub_inputs_, sub_labels_, num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs
 
 
-imagePaths = load_image_paths('datasets')
-padding = int(abs(config.image_size - config.label_size) / 2)
+def gen(test_img=""):
+    imagePaths = load_image_paths("test") if test_img == "" else [os.path.join("test", test_img)]
+    padding = int(abs(config.image_size - config.label_size) / 2)
 
-# sub_inputs,sub_labels 생성
-sub_inputs, sub_labels = generate_sub_input_label(imagePaths, padding)
+    # sub_inputs,sub_labels 생성
+    sub_inputs, sub_labels, num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs = generate_sub_input_label(imagePaths,
+                                                                                                            padding)
 
-# numpy array로 변환
-inputArr = np.asarray(sub_inputs)
-inputLabel = np.asarray(sub_labels)
+    # numpy array로 변환
+    inputArr = np.asarray(sub_inputs)
+    inputLabel = np.asarray(sub_labels)
 
-save_h5_data(inputArr, inputLabel, 'train.h5')
+    save_h5_data(inputArr, inputLabel, 'test.h5')
+    return num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs
+
+
+gen()
