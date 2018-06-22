@@ -73,3 +73,5 @@ modules.xml
 
 logs/*
 checkpoint/*
+__pycache__/*
+venv/*
