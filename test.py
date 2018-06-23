@@ -4,6 +4,7 @@ from config import config
 import os
 from commons import (read_h5_data, saveImage, mergeSubimages, scaleDownAndUp)
 from generate_test_h5 import gen
+import numpy as np
 
 checkpoint_path = './checkpoint'
 data_dir = './test.h5'
@@ -11,6 +12,22 @@ data_dir = './test.h5'
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string("test_img", "", "Test img")
+
+
+def log10(x):
+    numerator = tf.log(x)
+    denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
+    return numerator / denominator
+
+
+def psnr(im1, im2):
+    img_arr1 = np.array(im1).astype('float32')
+    img_arr2 = np.array(im2).astype('float32')
+    mse = tf.reduce_mean(tf.squared_difference(img_arr1, img_arr2))
+    psnr = tf.constant(255 ** 2, dtype=tf.float32) / mse
+    result = tf.constant(10, dtype=tf.float32) * log10(psnr)
+    result = result.eval()
+    return result
 
 
 def variable_summaries(var, name):
@@ -80,13 +97,19 @@ def main(_):
         load_checkpoint()
 
         result = conv3.eval({images: input})
-        image = mergeSubimages(result, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
         if not os.path.exists(config.result_dir):
             os.mkdir(config.result_dir)
+
+        srcnn_img = mergeSubimages(result, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
         original_img = mergeSubimages(label, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
+        bicubic_img = scaleDownAndUp(original_img, config.scale)
+
+        psnr_of_srcnn = psnr(original_img, srcnn_img)
+        psnr_of_bicubic = psnr(original_img, bicubic_img)
         saveImage(original_img, config.result_dir + '/result_original.png')
-        saveImage(scaleDownAndUp(original_img, config.scale), config.result_dir + '/result_bicubic.png')
-        saveImage(image, config.result_dir + '/result.png')
+        saveImage(bicubic_img, config.result_dir + '/result_bicubic.png')
+        saveImage(srcnn_img, config.result_dir + '/result.png')
+        print("PSNR of SRCNN: %f\nPSNR of bicubic: %f\n" % (psnr_of_srcnn, psnr_of_bicubic))
 
 
 if __name__ == '__main__':
