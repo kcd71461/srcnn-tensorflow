@@ -88,6 +88,3 @@ def gen(test_img=""):
 
     save_h5_data(inputArr, inputLabel, 'test.h5')
     return num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs
-
-
-gen()

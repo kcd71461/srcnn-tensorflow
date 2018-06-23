@@ -75,3 +75,5 @@ logs/*
 checkpoint/*
 __pycache__/*
 venv/*
+datasets/*
+test/*

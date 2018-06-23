@@ -2,7 +2,7 @@
 import tensorflow as tf
 from config import config
 import os
-from commons import (read_h5_data, saveImage, mergeSubimages)
+from commons import (read_h5_data, saveImage, mergeSubimages, scaleDownAndUp)
 from generate_test_h5 import gen
 
 checkpoint_path = './checkpoint'
@@ -11,6 +11,7 @@ data_dir = './test.h5'
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string("test_img", "", "Test img")
+
 
 def variable_summaries(var, name):
     """Attach a lot of summaries to a Tensor."""
@@ -40,7 +41,6 @@ def main(_):
                 print("\tLoaded!")
             else:
                 print("\tcheckpoint not exists!")
-
 
         # <editor-fold desc="placeholder">
         # color channel: 3
@@ -83,6 +83,9 @@ def main(_):
         image = mergeSubimages(result, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
         if not os.path.exists(config.result_dir):
             os.mkdir(config.result_dir)
+        original_img = mergeSubimages(label, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
+        saveImage(original_img, config.result_dir + '/result_original.png')
+        saveImage(scaleDownAndUp(original_img, config.scale), config.result_dir + '/result_bicubic.png')
         saveImage(image, config.result_dir + '/result.png')
 
 

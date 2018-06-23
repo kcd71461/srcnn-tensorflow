@@ -42,3 +42,15 @@ def mergeSubimages(images, size):
         horizontalIndex * width: horizontalIndex * width + width, :] = image
 
     return img
+
+
+def scaleDownAndUp(image, scale):
+    bicbuic_img = cv2.resize(image, None, fx=1 / scale, fy=1 / scale, interpolation=cv2.INTER_CUBIC)  # scale down
+    return cv2.resize(bicbuic_img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)  # scale up
+
+'''
+def ndarray_to_img(arr):
+    height, width = arr.shape[1], arr.shape[2]
+    img = np.zeros((height, width, 3))
+    img[:,:,:]=image
+'''
