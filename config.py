@@ -8,5 +8,6 @@ config = tf.contrib.training.HParams(
     learning_rate=0.0001,
     batch_size=64,
     log_path="./logs",
-    result_dir="./result"
+    result_dir="./result",
+    train_test_img="ronaldo.bmp"
 )

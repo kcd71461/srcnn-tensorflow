@@ -74,7 +74,7 @@ sub input-label들 생성
     return sub_inputs_, sub_labels_, num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs
 
 
-def gen(test_img=""):
+def generate_test_h5(test_img="", save_name="test.h5"):
     imagePaths = load_image_paths("test") if test_img == "" else [os.path.join("test", test_img)]
     padding = int(abs(config.image_size - config.label_size) / 2)
 
@@ -86,5 +86,5 @@ def gen(test_img=""):
     inputArr = np.asarray(sub_inputs)
     inputLabel = np.asarray(sub_labels)
 
-    save_h5_data(inputArr, inputLabel, 'test.h5')
+    save_h5_data(inputArr, inputLabel, save_name)
     return num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs

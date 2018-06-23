@@ -3,6 +3,8 @@ import glob
 import h5py
 import numpy as np
 import cv2
+import tensorflow as tf
+from config import config
 
 
 def load_image_paths(path):
@@ -48,9 +50,17 @@ def scaleDownAndUp(image, scale):
     bicbuic_img = cv2.resize(image, None, fx=1 / scale, fy=1 / scale, interpolation=cv2.INTER_CUBIC)  # scale down
     return cv2.resize(bicbuic_img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)  # scale up
 
-'''
-def ndarray_to_img(arr):
-    height, width = arr.shape[1], arr.shape[2]
-    img = np.zeros((height, width, 3))
-    img[:,:,:]=image
-'''
+
+def log10(x):
+    numerator = tf.log(x)
+    denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
+    return numerator / denominator
+
+
+def psnr(img1, img2):
+    img_arr1 = np.array(img1).astype('float32')
+    img_arr2 = np.array(img2).astype('float32')
+    mse = tf.reduce_mean(tf.squared_difference(img_arr1, img_arr2))
+    psnr = tf.constant(255 ** 2, dtype=tf.float32) / mse
+    result = tf.constant(10, dtype=tf.float32) * log10(psnr)
+    return result.eval()

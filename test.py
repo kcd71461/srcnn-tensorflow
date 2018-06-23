@@ -2,9 +2,8 @@
 import tensorflow as tf
 from config import config
 import os
-from commons import (read_h5_data, saveImage, mergeSubimages, scaleDownAndUp)
-from generate_test_h5 import gen
-import numpy as np
+from commons import (read_h5_data, saveImage, mergeSubimages, scaleDownAndUp, psnr)
+from generate_test_h5 import generate_test_h5
 
 checkpoint_path = './checkpoint'
 data_dir = './test.h5'
@@ -12,22 +11,6 @@ data_dir = './test.h5'
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string("test_img", "", "Test img")
-
-
-def log10(x):
-    numerator = tf.log(x)
-    denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
-    return numerator / denominator
-
-
-def psnr(im1, im2):
-    img_arr1 = np.array(im1).astype('float32')
-    img_arr2 = np.array(im2).astype('float32')
-    mse = tf.reduce_mean(tf.squared_difference(img_arr1, img_arr2))
-    psnr = tf.constant(255 ** 2, dtype=tf.float32) / mse
-    result = tf.constant(10, dtype=tf.float32) * log10(psnr)
-    result = result.eval()
-    return result
 
 
 def variable_summaries(var, name):
@@ -45,7 +28,7 @@ def variable_summaries(var, name):
 
 def main(_):
     with tf.Session() as sess:
-        num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs = gen(FLAGS.test_img)
+        num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs = generate_test_h5(FLAGS.test_img)
 
         def load_checkpoint():
             print("Load Checkpoint")
@@ -100,9 +83,9 @@ def main(_):
         if not os.path.exists(config.result_dir):
             os.mkdir(config.result_dir)
 
-        srcnn_img = mergeSubimages(result, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
         original_img = mergeSubimages(label, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
         bicubic_img = scaleDownAndUp(original_img, config.scale)
+        srcnn_img = mergeSubimages(result, [num_of_vertical_sub_imgs, num_of_horizontal_sub_imgs])
 
         psnr_of_srcnn = psnr(original_img, srcnn_img)
         psnr_of_bicubic = psnr(original_img, bicubic_img)

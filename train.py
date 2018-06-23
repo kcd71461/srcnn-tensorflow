@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
+
+from commons import mergeSubimages, read_h5_data, scaleDownAndUp, psnr
 from config import config
 import os
 import h5py
 import numpy as np
 
+from generate_test_h5 import generate_test_h5
+
 checkpoint_path = './checkpoint'
-data_dir = './train.h5'
+train_h5 = './train.h5'
+train_test_h5 = "train_test.h5"
 
 
 def variable_summaries(var, name):
@@ -50,6 +55,8 @@ def main(_):  # ?
                 os.makedirs(model_path)
             saver.save(sess, os.path.join(model_path, 'model'), global_step=step)
 
+        test_num_vertical_imgs, test_num_horizontal_imgs = generate_test_h5(config.train_test_img, train_test_h5)
+
         # <editor-fold desc="placeholder">
         # color channel: 3
         images = tf.placeholder(tf.float32, [None, config.image_size, config.image_size, 3], name='images')
@@ -78,13 +85,15 @@ def main(_):  # ?
         conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1, 1, 1, 1], padding='VALID') + biases['b3']
         # </editor-fold>
 
-        input, label = read_train_data(data_dir)
+        input, label = read_train_data(train_h5)
+        test_input, test_label = read_h5_data(train_test_h5)
 
         with tf.name_scope('loss'):
             loss = tf.reduce_mean(tf.square(labels - conv3))
             tf.summary.scalar('loss', loss)
         saver = tf.train.Saver()
         train_op = tf.train.AdamOptimizer(learning_rate=config.learning_rate).minimize(loss)
+
         tf.initialize_all_variables().run()
 
         epoch = 0
@@ -111,6 +120,17 @@ def main(_):  # ?
                         (epoch + 1), counter, err))
 
                 if counter % 500 == 0:
+                    test_result = conv3.eval({images: test_input})
+                    original_img = mergeSubimages(test_label, [test_num_vertical_imgs, test_num_horizontal_imgs])
+                    bicubic_img = scaleDownAndUp(original_img, config.scale)
+                    srcnn_img = mergeSubimages(test_result, [test_num_vertical_imgs, test_num_horizontal_imgs])
+                    bicubic_psnr = tf.Summary(
+                        value=[tf.Summary.Value(tag='bicubic_psnr', simple_value=psnr(original_img, bicubic_img))])
+                    srcnn_psnr = tf.Summary(
+                        value=[tf.Summary.Value(tag='srcnn_psnr', simple_value=psnr(original_img, srcnn_img))])
+                    log_writer.add_summary(bicubic_psnr, counter)
+                    log_writer.add_summary(srcnn_psnr, counter)
+
                     summary = sess.run(merged, feed_dict={images: batch_images, labels: batch_labels})
                     log_writer.add_summary(summary, counter)
                     save_checkpoint(counter)
