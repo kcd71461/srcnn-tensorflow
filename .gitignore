@@ -77,3 +77,6 @@ __pycache__/*
 venv/*
 datasets/*
 test/*
+!checkpoint/srcnn/checkpoint
+!checkpoint/srcnn/model-298000.meta
+!checkpoint/srcnn/model-298000.index
