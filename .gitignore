@@ -77,6 +77,9 @@ __pycache__/*
 venv/*
 datasets/*
 test/*
+!test/bird_GT.bmp
+!test/ronaldo.bmp
+!test/head_GT.bmp
 !checkpoint/srcnn/
 checkpoint/srcnn/*
 !checkpoint/srcnn/checkpoint
