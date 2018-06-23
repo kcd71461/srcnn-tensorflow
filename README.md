@@ -14,7 +14,7 @@
 ```
 generate_train_h5: generate "train.h5" file
 train.py: train
-test.py --test_img {image_file_name}: generate original, bicubic, srcnn results
+test.py: generate original, bicubic, srcnn results
 ```
 
 
